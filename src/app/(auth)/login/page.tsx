@@ -20,12 +20,13 @@ export default function LoginPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone }),
     });
-    setLoading(false);
     if (!res.ok) {
+      setLoading(false);
       const data = await res.json().catch(() => ({}));
       setError(data.error ?? 'Failed to send OTP');
       return;
     }
+    // Keep `loading` true through navigation so the button stays disabled until /verify loads.
     router.push(`/verify?phone=${encodeURIComponent(phone)}`);
   }
 

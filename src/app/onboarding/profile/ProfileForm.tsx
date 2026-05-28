@@ -45,12 +45,13 @@ export function ProfileForm({ initial, nextHref }: ProfileFormProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, photoUrl: photoUrl || null }),
     });
-    setSaving(false);
     if (!res.ok) {
+      setSaving(false);
       const d = await res.json().catch(() => ({}));
       setError(d.error ?? 'Could not save');
       return;
     }
+    // Keep `saving` true through navigation so the button stays disabled until the next page loads.
     router.push(nextHref);
     router.refresh();
   }

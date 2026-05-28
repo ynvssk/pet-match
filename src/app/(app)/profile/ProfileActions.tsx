@@ -11,7 +11,6 @@ export function ResetUserButton() {
     if (!confirm('Reset your activity? This clears all your matches, chats, likes/passes, blocks, and reports. Your account and pets stay.')) return;
     setBusy(true);
     await fetch('/api/user/reset', { method: 'POST' });
-    setBusy(false);
     router.push('/discover');
     router.refresh();
   }

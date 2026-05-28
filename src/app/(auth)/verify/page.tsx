@@ -23,11 +23,12 @@ function VerifyInner() {
       body: JSON.stringify({ phone, otp }),
     });
     const data = await res.json().catch(() => ({}));
-    setLoading(false);
     if (!res.ok) {
+      setLoading(false);
       setError(data.error ?? 'Invalid OTP');
       return;
     }
+    // Keep `loading` true through navigation so the button stays disabled until the next page loads.
     if (data.needsProfile) router.push('/onboarding/profile');
     else if (data.needsPet) router.push('/onboarding/pet');
     else router.push('/discover');

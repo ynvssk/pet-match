@@ -94,13 +94,14 @@ export function PetForm({ mode, petId, initial }: PetFormProps) {
     const url = mode === 'create' ? '/api/pets' : `/api/pets/${petId}`;
     const method = mode === 'create' ? 'POST' : 'PATCH';
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    setSaving(false);
     if (!res.ok) {
+      setSaving(false);
       const d = await res.json().catch(() => ({}));
       setError(d.error ?? 'Save failed');
       setStep('form');
       return;
     }
+    // Keep `saving` true through navigation — the target page load takes a beat, and resetting here re-enables the button mid-transition.
     router.push(mode === 'create' ? '/discover' : '/profile');
     router.refresh();
   }

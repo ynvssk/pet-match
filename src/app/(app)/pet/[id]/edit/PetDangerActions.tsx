@@ -23,7 +23,6 @@ export function PetDangerActions({ petId, isActive }: { petId: string; isActive:
     if (!confirm('Permanently delete this pet profile? This cannot be undone.')) return;
     setBusy(true);
     await fetch(`/api/pets/${petId}`, { method: 'DELETE' });
-    setBusy(false);
     router.push('/profile');
     router.refresh();
   }
