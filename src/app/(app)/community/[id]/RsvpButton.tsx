@@ -25,7 +25,7 @@ export function RsvpButton({ eventId, initialAttending }: { eventId: string; ini
       full
       variant={attending ? 'outline' : 'primary'}
       onClick={toggle}
-      disabled={busy}
+      loading={busy}
     >
       {busy ? (attending ? 'Removing…' : 'Confirming…') : attending ? "You're going — tap to opt out" : 'Opt in to this event'}
     </Button>

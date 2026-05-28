@@ -31,10 +31,10 @@ export function PetDangerActions({ petId, isActive }: { petId: string; isActive:
   return (
     <div className="space-y-2">
       <h2 className="text-sm font-semibold text-neutral-700">Visibility</h2>
-      <Button variant="outline" full onClick={toggleActive} disabled={busy}>
+      <Button variant="outline" full onClick={toggleActive} loading={busy}>
         {isActive ? 'Deactivate (hide from Discover)' : 'Reactivate'}
       </Button>
-      <Button variant="danger" full onClick={destroy} disabled={busy}>
+      <Button variant="danger" full onClick={destroy} loading={busy}>
         Delete pet
       </Button>
     </div>

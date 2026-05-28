@@ -16,7 +16,7 @@ export function ResetUserButton() {
     router.refresh();
   }
   return (
-    <Button variant="outline" full onClick={onClick} disabled={busy}>
+    <Button variant="outline" full onClick={onClick} loading={busy}>
       {busy ? 'Resetting…' : 'Reset activity (chats & swipes)'}
     </Button>
   );
@@ -24,21 +24,25 @@ export function ResetUserButton() {
 
 export function LogoutButton() {
   const router = useRouter();
+  const [busy, setBusy] = useState(false);
   async function onClick() {
+    setBusy(true);
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
     router.refresh();
   }
-  return <Button variant="outline" full onClick={onClick}>Log out</Button>;
+  return <Button variant="outline" full onClick={onClick} loading={busy}>Log out</Button>;
 }
 
 export function DeleteAccountButton() {
   const router = useRouter();
+  const [busy, setBusy] = useState(false);
   async function onClick() {
     if (!confirm('Delete your account permanently? Pets, matches, and messages will be removed.')) return;
+    setBusy(true);
     await fetch('/api/auth/delete', { method: 'POST' });
     router.push('/login');
     router.refresh();
   }
-  return <Button variant="danger" full onClick={onClick}>Delete account</Button>;
+  return <Button variant="danger" full onClick={onClick} loading={busy}>Delete account</Button>;
 }

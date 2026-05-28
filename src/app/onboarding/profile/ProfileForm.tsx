@@ -104,7 +104,7 @@ export function ProfileForm({ initial, nextHref }: ProfileFormProps) {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <Button type="submit" full disabled={saving || uploading}>
+      <Button type="submit" full loading={saving} disabled={uploading}>
         {saving ? 'Saving…' : 'Continue'}
       </Button>
     </form>

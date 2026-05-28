@@ -51,16 +51,16 @@ export function ChatHeaderMenu({ targetUserId }: { targetUserId: string }) {
             <button
               onClick={report}
               disabled={busy}
-              className="block w-full px-3 py-2.5 text-left text-sm hover:bg-neutral-50"
+              className="block w-full px-3 py-2.5 text-left text-sm hover:bg-neutral-50 disabled:opacity-50"
             >
-              Report
+              {busy ? 'Working…' : 'Report'}
             </button>
             <button
               onClick={block}
               disabled={busy}
-              className="block w-full px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+              className="block w-full px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
-              Block
+              {busy ? 'Working…' : 'Block'}
             </button>
           </div>
         </>

@@ -128,7 +128,7 @@ export function PetForm({ mode, petId, initial }: PetFormProps) {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">
           <Button type="button" variant="outline" full onClick={() => setStep('form')}>Edit</Button>
-          <Button type="button" full onClick={save} disabled={saving}>
+          <Button type="button" full onClick={save} loading={saving}>
             {saving ? 'Saving…' : mode === 'create' ? 'Publish' : 'Save changes'}
           </Button>
         </div>

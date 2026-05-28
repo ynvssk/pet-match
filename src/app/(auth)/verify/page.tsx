@@ -57,7 +57,7 @@ function VerifyInner() {
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" full disabled={loading || otp.length !== 4}>
+        <Button type="submit" full loading={loading} disabled={otp.length !== 4}>
           {loading ? 'Verifying…' : 'Verify'}
         </Button>
       </form>

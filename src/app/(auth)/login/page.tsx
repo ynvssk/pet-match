@@ -52,7 +52,7 @@ export default function LoginPage() {
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" full disabled={loading}>
+        <Button type="submit" full loading={loading}>
           {loading ? 'Sending…' : 'Send OTP'}
         </Button>
         <p className="text-center text-xs text-neutral-400">MVP: any phone works, OTP is always <span className="font-mono">0000</span>.</p>

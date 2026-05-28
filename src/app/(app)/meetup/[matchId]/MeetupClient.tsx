@@ -29,6 +29,7 @@ export function MeetupClient({ matchId, currentUserId, venues, initialMeetups }:
   const [venueId, setVenueId] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [responding, setResponding] = useState<string | null>(null);
 
   async function propose(e: React.FormEvent) {
     e.preventDefault();
@@ -61,13 +62,13 @@ export function MeetupClient({ matchId, currentUserId, venues, initialMeetups }:
   }
 
   async function respond(meetupId: string, status: 'ACCEPTED' | 'DECLINED' | 'COUNTERED') {
-    setBusy(true);
+    setResponding(`${meetupId}:${status}`);
     const res = await fetch(`/api/meetup/${meetupId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    setBusy(false);
+    setResponding(null);
     if (!res.ok) return;
     setMeetups((prev) => prev.map((m) => (m.id === meetupId ? { ...m, status } : m)));
   }
@@ -113,7 +114,7 @@ export function MeetupClient({ matchId, currentUserId, venues, initialMeetups }:
                 placeholder="How about Saturday morning?"
               />
             </div>
-            <Button type="submit" full disabled={!venueId || busy}>
+            <Button type="submit" full loading={busy} disabled={!venueId}>
               {busy ? 'Sending…' : 'Suggest meetup'}
             </Button>
           </form>
@@ -140,8 +141,8 @@ export function MeetupClient({ matchId, currentUserId, venues, initialMeetups }:
                     </div>
                     {!mine && m.status === 'PROPOSED' && (
                       <div className="flex flex-col gap-1">
-                        <Button size="sm" onClick={() => respond(m.id, 'ACCEPTED')} disabled={busy}>Accept</Button>
-                        <Button size="sm" variant="outline" onClick={() => respond(m.id, 'DECLINED')} disabled={busy}>Decline</Button>
+                        <Button size="sm" onClick={() => respond(m.id, 'ACCEPTED')} loading={responding === `${m.id}:ACCEPTED`} disabled={responding !== null}>Accept</Button>
+                        <Button size="sm" variant="outline" onClick={() => respond(m.id, 'DECLINED')} loading={responding === `${m.id}:DECLINED`} disabled={responding !== null}>Decline</Button>
                       </div>
                     )}
                   </div>
