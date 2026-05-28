@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>PetMatch — Demo</title>
+<style>
+  :root{
+    /* Dog-vision palette: dogs are red-green colourblind and see blue + yellow best. */
+    --blue-50:#EFF4FE; --blue-100:#D8E4FB; --blue-500:#2D6CDF; --blue-600:#1F58C0; --blue-700:#17448F;
+    --yellow-400:#FFC83D; --yellow-500:#F2B705; --yellow-600:#D99E00;
+    --n0:#ffffff; --n50:#fafafa; --n100:#f5f5f5; --n200:#e5e5e5; --n300:#d4d4d4;
+    --n400:#a3a3a3; --n500:#737373; --n600:#525252; --n900:#171717;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    color:var(--n900); background:#e9eaee;
+    -webkit-font-smoothing:antialiased;
+  }
+  .phone{
+    position:relative; width:min(430px,100vw); height:100dvh; margin:0 auto;
+    background:var(--n0); display:flex; flex-direction:column; overflow:hidden;
+  }
+  @media(min-width:480px){
+    body{display:flex; align-items:center; justify-content:center; padding:16px 0}
+    .phone{height:min(900px,calc(100dvh - 32px)); border-radius:30px;
+      box-shadow:0 24px 70px rgba(0,0,0,.28); border:1px solid #dadce0}
+  }
+  .screen{position:absolute; inset:0; display:none; flex-direction:column; overflow:hidden; background:var(--n0)}
+  .screen.active{display:flex}
+  .scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch}
+  .muted{color:var(--n500)}
+  .small{font-size:12px}
+  .center{text-align:center}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;
+    border-radius:14px;font-weight:600;font-size:15px;padding:0 16px;height:48px;cursor:pointer;
+    font-family:inherit;line-height:1;transition:background .12s,transform .05s}
+  .btn:active{transform:scale(.98)}
+  .btn.full{width:100%}
+  .btn-primary{background:var(--blue-500);color:#fff}
+  .btn-primary:active{background:var(--blue-600)}
+  .btn-accent{background:var(--yellow-500);color:#3a2c00}
+  .btn-accent:active{background:var(--yellow-600)}
+  .btn-outline{background:#fff;color:var(--n900);border:1px solid var(--n300)}
+  .btn:disabled{opacity:.5;cursor:default;transform:none}
+
+  /* Inputs */
+  label{display:block;font-size:13px;font-weight:600;color:var(--n600);margin-bottom:6px}
+  .field{width:100%;height:48px;border:1px solid var(--n300);border-radius:14px;padding:0 14px;
+    font-size:16px;font-family:inherit;background:var(--n50);outline:none}
+  .field:focus{border-color:var(--blue-500);background:#fff}
+  select.field{appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center}
+  textarea.field{height:auto;padding:12px 14px;resize:none;line-height:1.4}
+
+  /* Login / centered screens */
+  .pad{padding:0 24px}
+  .logo{width:64px;height:64px;border-radius:18px;background:var(--blue-500);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px}
+
+  /* Top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 8px}
+  .brand-logo{font-weight:800;font-size:18px}
+  .page-title{font-size:20px;font-weight:700}
+
+  /* Discover card */
+  .card-wrap{position:relative;border-radius:20px;overflow:hidden;background:var(--n100);
+    box-shadow:0 1px 4px rgba(0,0,0,.12);aspect-ratio:3/4}
+  .card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .img-fallback{position:absolute;inset:0;width:100%;height:100%;display:flex;align-items:center;
+    justify-content:center;background:linear-gradient(135deg,#dbeafe,#fef9c3)}
+  .card-overlay{position:absolute;left:0;right:0;bottom:0;padding:16px;color:#fff;
+    background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,0))}
+  .card-overlay h2{font-size:24px;font-weight:700;display:inline}
+  .card-age{font-size:18px;opacity:.9;margin-left:6px}
+  .card-sub{font-size:14px;opacity:.9;margin-top:2px}
+  .card-bio{font-size:14px;opacity:.9;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .chips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border-radius:999px;background:rgba(255,255,255,.22);padding:2px 9px;font-size:12px}
+
+  .actions{margin-top:16px;display:flex;justify-content:center;gap:24px}
+  .circle{height:60px;width:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,.15);border:none;cursor:pointer;background:#fff}
+  .circle:active{transform:scale(.94)}
+  .circle.pass{border:1px solid var(--n300);color:var(--n500)}
+  .circle.like{background:var(--yellow-500);color:#fff}
+
+  .empty{border:1px dashed var(--n300);border-radius:20px;padding:40px 20px;text-align:center}
+  .empty .em{font-size:40px}
+
+  /* Bottom nav */
+  .nav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--n200);background:rgba(255,255,255,.96);backdrop-filter:blur(6px)}
+  .nav button{background:none;border:none;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;
+    gap:3px;font-size:11px;color:var(--n500);cursor:pointer;font-family:inherit}
+  .nav button.active{color:var(--blue-600);font-weight:600}
+
+  /* Match modal */
+  .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;
+    justify-content:center;padding:18px;z-index:60}
+  .backdrop.active{display:flex}
+  .modal{background:#fff;border-radius:22px;padding:26px 22px;text-align:center;width:100%;max-width:360px;
+    box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .match-label{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--yellow-600);text-transform:uppercase}
+  .modal h2{font-size:24px;margin-top:4px}
+  .match-photos{display:flex;justify-content:center;gap:16px;margin:22px 0}
+  .match-photo{position:relative;height:96px;width:96px;border-radius:50%;overflow:hidden;
+    box-shadow:0 0 0 4px var(--blue-500);background:var(--n100)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+
+  /* Lists (matches / events) */
+  .list{padding:4px 16px 20px;display:flex;flex-direction:column;gap:10px}
+  .row-card{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:12px;
+    box-shadow:0 0 0 1px var(--n100);cursor:pointer;text-align:left;width:100%;border:none;font-family:inherit}
+  .row-card:active{background:var(--n50)}
+  .avatar{position:relative;height:56px;width:56px;border-radius:50%;overflow:hidden;background:var(--n100);flex:0 0 auto}
+  .avatar.sm{height:28px;width:28px}
+  .avatar.paw{display:flex;align-items:center;justify-content:center;font-size:24px}
+  .row-main{min-width:0;flex:1}
+  .row-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .row-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row-preview{font-size:14px;color:var(--n500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .evt{display:block;background:#fff;border-radius:18px;padding:16px;box-shadow:0 0 0 1px var(--n100);
+    cursor:pointer;text-align:left;width:100%;border:none;font-family:inherit}
+  .evt:active{background:var(--n50)}
+  .evt h3{font-weight:600;font-size:16px}
+  .evt-meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--n500);margin-top:4px}
+  .badge{background:var(--blue-500);color:#fff;border-radius:999px;padding:3px 9px;font-size:10px;
+    font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .badge.yellow{background:var(--yellow-500);color:#3a2c00}
+  .stack{display:flex}
+  .stack .avatar{margin-left:-8px;box-shadow:0 0 0 2px #fff}
+  .stack .avatar:first-child{margin-left:0}
+  .going-line{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:space-between}
+
+  /* Chat */
+  .chead{display:flex;align-items:center;gap:10px;padding:12px 12px;border-bottom:1px solid var(--n200)}
+  .iconbtn{background:none;border:none;cursor:pointer;color:var(--n600);display:flex;padding:6px;border-radius:10px}
+  .iconbtn:active{background:var(--n100)}
+  .chat-scroll{flex:1;overflow-y:auto;padding:14px 14px}
+  .msg-row{display:flex;margin-bottom:8px}
+  .msg-row.me{justify-content:flex-end}
+  .bubble{max-width:76%;border-radius:18px;padding:9px 14px;font-size:14px;line-height:1.35}
+  .bubble.me{background:var(--blue-500);color:#fff;border-bottom-right-radius:5px}
+  .bubble.them{background:var(--n100);color:var(--n900);border-bottom-left-radius:5px}
+  .chat-foot{border-top:1px solid var(--n200);background:#fff;padding:8px}
+  .meetup-cta{width:100%;border:1px dashed var(--n300);background:var(--blue-50);color:var(--blue-700);
+    border-radius:12px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;font-family:inherit}
+  .composer{display:flex;align-items:center;gap:8px}
+  .composer input{flex:1;height:44px;border-radius:999px;border:1px solid var(--n300);background:var(--n50);
+    padding:0 16px;font-size:16px;outline:none;font-family:inherit}
+  .composer input:focus{border-color:var(--blue-500);background:#fff}
+  .send{height:44px;width:44px;border-radius:50%;background:var(--blue-500);color:#fff;border:none;
+    display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .send:disabled{opacity:.5}
+
+  .section-pad{padding:16px}
+  .info-row{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--n100);font-size:15px}
+  .info-row span:first-child{color:var(--n500)}
+  .hint{font-size:12px;color:var(--n400);text-align:center;margin-top:8px}
+  .err{color:#c7402f;font-size:14px;margin-top:8px}
+  .spacer{height:8px}
+  .ochip{border:1px solid var(--n300);background:#fff;border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--n600)}
+  .ochip.chip-on{background:var(--blue-500);color:#fff;border-color:var(--blue-500)}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px}
+  .chip-light{background:var(--blue-50);color:var(--blue-700);border-radius:999px;padding:3px 10px;font-size:12px}
+  .pcard{background:var(--n50);border-radius:16px;padding:16px;box-shadow:0 0 0 1px var(--n100)}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--n600)}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- LOGIN -->
+  <section id="screen-login" class="screen active">
+    <div class="scroll pad" style="display:flex;flex-direction:column;justify-content:center">
+      <div style="margin:40px 0 28px;text-align:center">
+        <div class="logo">🐾</div>
+        <h1 style="font-size:24px">Welcome to PetMatch</h1>
+        <p class="muted" style="margin-top:4px">Find pet friends nearby.</p>
+      </div>
+      <label for="phone">Phone number</label>
+      <input id="phone" class="field" type="tel" value="+91 " placeholder="+91 98765 43210"
+        onkeydown="if(event.key==='Enter')login()" />
+      <div class="spacer"></div>
+      <button class="btn btn-primary full" onclick="login()">Send OTP</button>
+      <p class="hint">MVP: any phone works, OTP is always <b>0000</b>.</p>
+    </div>
+  </section>
+
+  <!-- VERIFY -->
+  <section id="screen-verify" class="screen">
+    <div class="chead">
+      <button class="iconbtn" onclick="showScreen('login')" aria-label="Back" id="verify-back"></button>
+      <b>Verify</b>
+    </div>
+    <div class="scroll pad" style="padding-top:24px">
+      <h1 style="font-size:22px">Enter the code</h1>
+      <p class="muted" style="margin:6px 0 18px">We sent a code to your phone.</p>
+      <label for="otp">OTP</label>
+      <input id="otp" class="field" inputmode="numeric" maxlength="4" placeholder="0000"
+        onkeydown="if(event.key==='Enter')verifyOtp()" style="letter-spacing:.4em;text-align:center;font-size:22px" />
+      <p id="otp-err" class="err"></p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary full" onclick="verifyOtp()">Verify</button>
+      <p class="hint">Use code <b>0000</b>.</p>
+    </div>
+  </section>
+
+  <!-- ONBOARDING -->
+  <section id="screen-onboarding" class="screen">
+    <div id="ob-body" class="scroll"></div>
+  </section>
+
+  <!-- APP (tabbed) -->
+  <section id="screen-app" class="screen">
+    <div id="app-content" class="scroll"></div>
+    <nav class="nav" id="bottom-nav"></nav>
+  </section>
+
+  <!-- CHAT (full screen) -->
+  <section id="screen-chat" class="screen">
+    <div class="chead" id="chat-head"></div>
+    <div class="chat-scroll" id="chat-scroll"></div>
+    <div class="chat-foot">
+      <div class="composer">
+        <input id="chat-input" placeholder="Type a message…"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}" />
+        <button class="send" onclick="sendMsg()" aria-label="Send" id="send-btn"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATCH MODAL -->
+  <div class="backdrop" id="match-modal" onclick="if(event.target===this)closeMatch()"></div>
+
+</div>
+
+<script>
+"use strict";
+const $ = (s)=>document.querySelector(s);
+
+/* ---------- Icons (lucide-style inline SVG) ---------- */
+const PATHS = {
+  heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>',
+  back:'<path d="m15 18-6-6 6-6"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  message:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'
+};
+function svg(name,size,opt){
+  opt = opt||{};
+  const fill = opt.fill||'none';
+  const stroke = opt.fill==='currentColor' ? 'none' : 'currentColor';
+  return '<svg viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="'+fill+'" stroke="'+stroke+
+    '" stroke-width="'+(opt.sw||2)+'" stroke-linecap="round" stroke-linejoin="round">'+PATHS[name]+'</svg>';
+}
+function imgFail(img){
+  const w = img.offsetWidth || 48;
+  const d = document.createElement('div');
+  d.className = 'img-fallback';
+  d.textContent = '🐾';
+  d.style.fontSize = Math.round(w*0.5)+'px';
+  img.replaceWith(d);
+}
+function petImg(url, cls){
+  return '<img class="'+cls+'" src="'+url+'" alt="" onerror="imgFail(this)" />';
+}
+
+/* ---------- Seed data (from prisma/seed.ts) ---------- */
+const RAW = {
+  Bangalore:[
+    ["Bruno","Golden Retriever",3,"large",["friendly","playful"],"Loves long walks and tennis balls."],
+    ["Luna","Labrador",2,"large",["gentle","social"],"Sweet girl, great with other dogs."],
+    ["Max","Beagle",4,"medium",["curious","energetic"],"Will follow any scent. Loves treats."],
+    ["Daisy","Pomeranian",1,"small",["playful","cuddly"],"Tiny but mighty."],
+    ["Rocky","German Shepherd",5,"large",["loyal","alert"],"Best boy. Loves park runs."],
+    ["Bella","Cocker Spaniel",2,"medium",["friendly","gentle"],"Looking for playdate friends."],
+    ["Charlie","Indie",3,"medium",["chill","friendly"],"Rescue pup with a big heart."],
+    ["Coco","Shih Tzu",4,"small",["playful","social"],"Looks fluffy because she is."],
+    ["Zoey","Dachshund",2,"small",["curious","cuddly"],"Loves sunbeams and ear scratches."],
+    ["Toby","Pug",5,"small",["chill","social"],"Snores loudly. No regrets."]
+  ],
+  Mumbai:[
+    ["Simba","Golden Retriever",4,"large",["friendly","playful"],"King of the Bandstand promenade."],
+    ["Kiara","Husky",2,"large",["energetic","social"],"AC required, hooman optional."],
+    ["Oreo","Dalmatian",3,"large",["playful","curious"],"Spots on point. Energy unmatched."],
+    ["Mishti","Indie",1,"medium",["shy","gentle"],"Slow to warm up, fierce when she does."],
+    ["Buddy","Boxer",4,"large",["playful","loyal"],"Always ready for a wrestle."],
+    ["Pixie","Maltese",2,"small",["cuddly","gentle"],"Tiny diva who loves Marine Drive walks."],
+    ["Rex","Rottweiler",5,"large",["loyal","chill"],"Looks tough, is a softie."],
+    ["Mochi","Chow Chow",3,"medium",["chill","social"],"Floof level: maximum."],
+    ["Nova","Border Collie",2,"medium",["energetic","curious"],"Will herd anything that moves."],
+    ["Leo","Beagle",3,"medium",["friendly","playful"],"Snack motivated. Always."]
+  ],
+  Delhi:[
+    ["Shadow","Labrador",4,"large",["loyal","gentle"],"Follows me everywhere."],
+    ["Pearl","Bichon Frise",2,"small",["playful","cuddly"],"White cloud with attitude."],
+    ["Tiger","Indie",3,"medium",["alert","friendly"],"Streetwise and sweet."],
+    ["Honey","Cocker Spaniel",1,"medium",["gentle","social"],"Pure sunshine."],
+    ["Bagheera","Black Lab",5,"large",["loyal","chill"],"My shadow at Lodhi Gardens."],
+    ["Misty","Pomeranian",2,"small",["playful","curious"],"Loud opinions, small body."],
+    ["Hunter","German Shepherd",4,"large",["alert","loyal"],"Looking for running buddies."],
+    ["Jasmine","Saluki",3,"large",["gentle","chill"],"Elegant and aloof, mostly."],
+    ["Brownie","Indie",2,"medium",["friendly","social"],"Loves chai biscuit crumbs."],
+    ["Snow","Samoyed",4,"large",["cuddly","social"],"Smiles for treats."]
+  ]
+};
+const CITIES = ["Bangalore","Mumbai","Delhi"];
+const TEMPERAMENTS = ['friendly','playful','gentle','energetic','shy','chill','social','loyal','curious','cuddly'];
+const ACTIVITIES = ['walks','fetch','swim','park visits','training','cuddles'];
+const PETS = [];
+const PET_BY_ID = {};
+let gi = 0;
+for (const city of CITIES){
+  for (const r of RAW[city]){
+    const pet = {
+      id:'p'+gi, name:r[0], breed:r[1], age:r[2], size:r[3],
+      temperament:r[4], bio:r[5], city, owner:r[0]+"'s Human",
+      photo:'https://placedog.net/640/640?id='+(gi+10)
+    };
+    PETS.push(pet); PET_BY_ID[pet.id] = pet; gi++;
+  }
+}
+
+const EVENTS = {
+  Bangalore:[
+    {name:"Pawty in the Park",location:"Cubbon Park, Kasturba Rd",details:"9–11 AM • Free • All breeds",days:3,attending:42,
+      desc:"Our flagship weekend meetup. Bring your dog, bring treats. Expect lots of zoomies, group photos by the bandstand, and a small obstacle course set up by the volunteer crew."},
+    {name:"Doggy Dabba Brunch",location:"Doggy Dabba Cafe, Indiranagar",details:"10 AM–1 PM • ₹400/pair",days:4,attending:18,
+      desc:"A relaxed brunch at the cafe with a dedicated playpen out back. Menu includes a pup-friendly platter (peanut butter biscuits, watermelon, frozen yogurt) and a full human menu."},
+    {name:"Lalbagh Sunrise Walk",location:"Lalbagh Botanical Garden, Mavalli",details:"6:30 AM • Free • Small/medium dogs",days:6,attending:12,
+      desc:"Beat the heat. Slow group walk on the inner loop trail with a coffee stop at the East Gate. Best for chill dogs who like to sniff."},
+    {name:"Pet Adoption Drive",location:"Bangalore Pet Park, Hennur Rd",details:"4–7 PM • Free entry",days:10,attending:27,
+      desc:"CUPA and Charlie's Animal Rescue Centre will be on-site with adoptable dogs. Your dog gets a playdate, you might find your next family member."}
+  ],
+  Mumbai:[
+    {name:"Carter Road Sundowner",location:"Carter Road Promenade, Bandra West",details:"5–7 PM • Free",days:2,attending:35,
+      desc:"Sunset stroll with the crew along the promenade. Lots of people, lots of joggers, lots of vada pav stands. Bring a leash and a poop bag."},
+    {name:"Joggers Park Doggy Hour",location:"Joggers Park, Bandra West",details:"7–9 AM • ₹100/dog",days:5,attending:20,
+      desc:"Off-leash hour in the fenced upper section. Small/medium dogs only. Booking via the park office at the gate."},
+    {name:"Pawfect Cafe Mixer",location:"Pawfect Cafe, Andheri West",details:"7–10 PM • ₹600/pair",days:8,attending:16,
+      desc:"Evening mixer with a pup-friendly menu and a quiet zone for shy dogs. Live acoustic set from 8 PM. Limit 20 dogs — RSVP early."}
+  ],
+  Delhi:[
+    {name:"Lodhi Gardens Group Walk",location:"Lodhi Gardens, Lodhi Rd",details:"7–9 AM • Free",days:3,attending:29,
+      desc:"The original Delhi pup meetup. Loop the gardens twice, swap tips, end at the cafe near Gate 3 for chai."},
+    {name:"Sunder Nursery Playdate",location:"Sunder Nursery, Nizamuddin",details:"8–10 AM • ₹50 entry",days:6,attending:22,
+      desc:"Spacious lawns and shaded paths. Great for off-leash play in the fenced central area. Volunteers will set up water stations."},
+    {name:"Puppychino Hangout",location:"Puppychino Cafe, Hauz Khas",details:"4–7 PM • ₹300/pair",days:9,attending:19,
+      desc:"Cafe meetup with house-made dog ice cream (puppychinos!) and a kids-and-dogs craft corner. Indoor + courtyard seating."},
+    {name:"Nehru Park Bark Run",location:"Nehru Park, Chanakyapuri",details:"6 AM • ₹200/pair",days:12,attending:24,
+      desc:"5K run/walk with your dog. Routes for all paces. Finisher medals (bandanas for dogs). All proceeds go to Friendicoes shelter."}
+  ]
+};
+const EVENT_BY_ID = {};
+for (const city of CITIES){
+  EVENTS[city].forEach((ev,i)=>{ ev.id = city.slice(0,3)+i; ev.city = city; EVENT_BY_ID[ev.id]=ev; });
+}
+function eventDate(days){
+  const d = new Date(Date.now()+days*86400000);
+  return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+}
+
+/* Auto-reply (from src/lib/autoReply.ts) */
+const REPLIES = [
+  'Cute pup! 🐶','Where do you usually walk?',"We're nearby too — would love a playdate!",
+  'When are you free this week?','My pup is super social, would be a great match!',
+  'How old is your pet?','Is yours vaccinated? Mine just got their shots done.',
+  'We love Cubbon Park on weekends. You?','Send a pic of your pup!',"Let's meet up sometime!"
+];
+function pickAutoReply(prev){
+  if(!prev) return REPLIES[0];
+  const l = prev.toLowerCase();
+  if(l.includes('meet')||l.includes('park')) return "Let's meet up sometime!";
+  return REPLIES[Math.floor(Math.random()*REPLIES.length)];
+}
+
+/* ---------- State ---------- */
+let state;
+function freshState(){
+  return { user:null, communityCity:'Bangalore', tab:'discover',
+    deck:[], likes:0, matches:[], messages:{}, rsvps:new Set(),
+    currentChat:null, currentEvent:null };
+}
+state = freshState();
+
+/* ---------- Navigation ---------- */
+const SCREENS = ['login','verify','onboarding','app','chat'];
+function showScreen(name){
+  SCREENS.forEach(s=>$('#screen-'+s).classList.toggle('active', s===name));
+}
+const NAV = [['discover','Discover','heart'],['community','Community','users'],['matches','Matches','message'],['profile','Profile','user']];
+function renderNav(){
+  const cur = state.tab==='eventDetail' ? 'community' : state.tab;
+  $('#bottom-nav').innerHTML = NAV.map(([t,label,ic])=>
+    '<button class="'+(cur===t?'active':'')+'" onclick="selectTab(\''+t+'\')">'+svg(ic,22)+'<span>'+label+'</span></button>'
+  ).join('');
+}
+function selectTab(tab){ state.tab = tab; renderApp(); showScreen('app'); }
+function renderApp(){
+  renderNav();
+  const c = $('#app-content');
+  if(state.tab==='discover') c.innerHTML = viewDiscover();
+  else if(state.tab==='community') c.innerHTML = viewCommunity();
+  else if(state.tab==='eventDetail') c.innerHTML = viewEventDetail();
+  else if(state.tab==='matches') c.innerHTML = viewMatches();
+  else if(state.tab==='profile') c.innerHTML = viewProfile();
+  c.scrollTop = 0;
+}
+
+/* ---------- Auth / onboarding ---------- */
+function login(){
+  const p = $('#phone').value.trim();
+  if(p.replace(/\D/g,'').length < 6){ return; }
+  $('#otp').value = '';
+  $('#otp-err').textContent = '';
+  showScreen('verify');
+  setTimeout(()=>$('#otp').focus(),50);
+}
+function verifyOtp(){
+  if($('#otp').value.trim() !== '0000'){ $('#otp-err').textContent = 'Invalid OTP'; return; }
+  $('#otp-err').textContent = '';
+  goOnboarding();
+}
+
+/* Two-step onboarding: about you, then your pet */
+let ob;
+function goOnboarding(){
+  ob = { name:'', city:'Bangalore', bio:'',
+    pet:{ name:'', breed:'', age:'', gender:'', size:'', temperament:new Set(), activities:new Set(), bio:'', vaccinated:false } };
+  renderOnboarding(1);
+  showScreen('onboarding');
+}
+function renderOnboarding(step){
+  const b = $('#ob-body');
+  if(step===1){
+    b.innerHTML =
+      '<div class="section-pad" style="padding-top:26px">'+
+        '<p class="muted small">Step 1 of 2</p>'+
+        '<h1 style="font-size:22px;margin-top:2px">About you</h1>'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Your name</label>'+
+        '<input id="ob-name" class="field" placeholder="e.g. Aarav" value="'+escapeHtml(ob.name)+'" />'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>City</label>'+
+        '<select id="ob-city" class="field">'+CITIES.map(c=>'<option'+(c===ob.city?' selected':'')+'>'+c+'</option>').join('')+'</select>'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Short bio (optional)</label>'+
+        '<textarea id="ob-bio" class="field" rows="3" placeholder="A few words about you…">'+escapeHtml(ob.bio)+'</textarea>'+
+        '<p id="ob-err" class="err"></p>'+
+        '<div class="spacer"></div>'+
+        '<button class="btn btn-primary full" onclick="obNext()">Continue</button>'+
+      '</div>';
+  } else {
+    const p = ob.pet;
+    const sizeOpts = ['SMALL','MEDIUM','LARGE'].map(s=>'<option value="'+s+'" '+(p.size===s?'selected':'')+'>'+s[0]+s.slice(1).toLowerCase()+'</option>').join('');
+    b.innerHTML =
+      '<div class="topbar" style="padding-bottom:0"><button class="iconbtn" style="margin-left:-6px" onclick="obBack()" aria-label="Back">'+svg('back',22)+'</button><span class="muted small">Step 2 of 2</span></div>'+
+      '<div class="section-pad" style="padding-top:4px">'+
+        '<h1 style="font-size:22px">Your pet</h1>'+
+        '<div class="spacer"></div>'+
+        '<label>Name</label><input id="p-name" class="field" placeholder="e.g. Milo" value="'+escapeHtml(p.name)+'" />'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Breed</label><input id="p-breed" class="field" placeholder="e.g. Golden Retriever" value="'+escapeHtml(p.breed)+'" />'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<div style="display:flex;gap:12px">'+
+          '<div style="flex:1"><label>Age (yrs)</label><input id="p-age" class="field" type="number" min="0" max="30" value="'+escapeHtml(String(p.age))+'" /></div>'+
+          '<div style="flex:1"><label>Gender</label><select id="p-gender" class="field"><option value="" '+(!p.gender?'selected':'')+' disabled>—</option><option value="MALE" '+(p.gender==='MALE'?'selected':'')+'>Male</option><option value="FEMALE" '+(p.gender==='FEMALE'?'selected':'')+'>Female</option></select></div>'+
+        '</div>'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Size</label><select id="p-size" class="field"><option value="" '+(!p.size?'selected':'')+' disabled>—</option>'+sizeOpts+'</select>'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Temperament (pick 1–5)</label>'+
+        '<div class="chip-row">'+TEMPERAMENTS.map(t=>'<button type="button" class="ochip'+(p.temperament.has(t)?' chip-on':'')+'" onclick="toggleChip(this,\'temperament\',\''+t+'\')">'+t+'</button>').join('')+'</div>'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Favourite activities (optional)</label>'+
+        '<div class="chip-row">'+ACTIVITIES.map(a=>'<button type="button" class="ochip'+(p.activities.has(a)?' chip-on':'')+'" onclick="toggleChip(this,\'activities\',\''+a+'\')">'+a+'</button>').join('')+'</div>'+
+        '<div class="spacer"></div><div class="spacer"></div>'+
+        '<label>Bio (optional)</label><textarea id="p-bio" class="field" rows="3" placeholder="A few words about your pet…">'+escapeHtml(p.bio)+'</textarea>'+
+        '<div class="spacer"></div>'+
+        '<label class="check"><input type="checkbox" id="p-vacc" '+(p.vaccinated?'checked':'')+' /> Up-to-date on vaccinations</label>'+
+        '<p id="ob-err2" class="err"></p>'+
+        '<div class="spacer"></div>'+
+        '<button class="btn btn-primary full" onclick="finishOnboarding()">Start matching 🐾</button>'+
+      '</div>';
+  }
+  b.scrollTop = 0;
+}
+function toggleChip(elm, kind, val){
+  const set = ob.pet[kind];
+  if(set.has(val)){ set.delete(val); elm.classList.remove('chip-on'); }
+  else { if(kind==='temperament' && set.size>=5) return; set.add(val); elm.classList.add('chip-on'); }
+}
+function obNext(){
+  const name = $('#ob-name').value.trim();
+  if(!name){ $('#ob-err').textContent = 'Please enter your name'; return; }
+  ob.name = name; ob.city = $('#ob-city').value; ob.bio = $('#ob-bio').value.trim();
+  renderOnboarding(2);
+}
+function syncPet(){
+  const p = ob.pet;
+  p.name = $('#p-name').value.trim();
+  p.breed = $('#p-breed').value.trim();
+  p.age = $('#p-age').value.trim();
+  p.gender = $('#p-gender').value;
+  p.size = $('#p-size').value;
+  p.bio = $('#p-bio').value.trim();
+  p.vaccinated = $('#p-vacc').checked;
+}
+function obBack(){ syncPet(); renderOnboarding(1); }
+function finishOnboarding(){
+  syncPet();
+  const p = ob.pet, err = $('#ob-err2');
+  if(!p.name)  return err.textContent = 'Your pet needs a name';
+  if(!p.breed) return err.textContent = 'Add a breed';
+  if(!p.age)   return err.textContent = 'Add an age';
+  if(!p.gender) return err.textContent = 'Pick a gender';
+  if(!p.size)  return err.textContent = 'Pick a size';
+  if(p.temperament.size===0) return err.textContent = 'Pick at least one trait';
+  state.user = { name:ob.name, city:ob.city, bio:ob.bio, petName:p.name,
+    pet:{ name:p.name, breed:p.breed, age:p.age, gender:p.gender, size:p.size,
+      temperament:[...p.temperament], activities:[...p.activities], bio:p.bio, vaccinated:p.vaccinated } };
+  state.communityCity = ob.city;
+  buildDeck();
+  selectTab('discover');
+}
+function buildDeck(){
+  const matched = new Set(state.matches.map(m=>m.petId));
+  state.deck = PETS.filter(p=>p.city===state.user.city && !matched.has(p.id)).map(p=>p.id);
+}
+function resetAll(){
+  state = freshState();
+  $('#phone').value = '+91 ';
+  $('#otp').value = '';
+  showScreen('login');
+}
+
+/* ---------- Discover ---------- */
+function viewDiscover(){
+  const u = state.user;
+  let html = '<div class="topbar"><span class="brand-logo">🐾 PetMatch</span><span class="muted small">'+u.city+'</span></div>';
+  html += '<div class="section-pad" style="padding-top:6px">';
+  const pid = state.deck[0];
+  if(!pid){
+    html += '<div class="empty"><div class="em">🐾</div><h2 style="margin-top:10px;font-size:18px">No more pets nearby</h2>'+
+      '<p class="muted small" style="margin-top:4px">Check back soon — more pups join every day.</p>'+
+      '<button class="btn btn-outline" style="margin-top:14px" onclick="refreshDeck()">Refresh</button></div>';
+  } else {
+    const p = PET_BY_ID[pid];
+    html += '<div class="card-wrap">'+petImg(p.photo,'card-img')+
+      '<div class="card-overlay"><div><h2>'+p.name+'</h2><span class="card-age">'+p.age+'</span></div>'+
+      '<p class="card-sub">'+p.breed+' • '+p.size+' • '+p.city+'</p>'+
+      (p.bio?'<p class="card-bio">'+p.bio+'</p>':'')+
+      '<div class="chips">'+p.temperament.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></div></div>';
+    html += '<div class="actions">'+
+      '<button class="circle pass" onclick="doPass()" aria-label="Pass">'+svg('x',28)+'</button>'+
+      '<button class="circle like" onclick="doLike()" aria-label="Like">'+svg('heart',28,{fill:'currentColor'})+'</button></div>';
+    html += '<p class="center muted small" style="margin-top:12px">'+state.deck.length+(state.deck.length===1?' pet':' pets')+' to see</p>';
+  }
+  html += '</div>';
+  return html;
+}
+function doPass(){ if(state.deck.length){ state.deck.shift(); renderApp(); } }
+function doLike(){
+  if(!state.deck.length) return;
+  const pid = state.deck.shift();
+  state.likes++;
+  const isMatch = state.likes===1 || Math.random() < 0.5;
+  if(isMatch && !state.matches.find(m=>m.petId===pid)){
+    state.matches.unshift({petId:pid, last:null});
+    state.messages[pid] = [];
+    renderApp();
+    openMatch(pid);
+  } else {
+    renderApp();
+  }
+}
+function refreshDeck(){ buildDeck(); renderApp(); }
+
+/* ---------- Match modal ---------- */
+function openMatch(pid){
+  const p = PET_BY_ID[pid];
+  $('#match-modal').innerHTML =
+    '<div class="modal" onclick="event.stopPropagation()">'+
+      '<p class="match-label">It\'s a match!</p>'+
+      '<h2>'+state.user.petName+' & '+p.name+'</h2>'+
+      '<div class="match-photos">'+
+        '<div class="match-photo"><div class="img-fallback" style="font-size:40px">🐾</div></div>'+
+        '<div class="match-photo">'+petImg(p.photo,'card-img')+'</div>'+
+      '</div>'+
+      '<p class="muted">Say hi and plan a playdate!</p>'+
+      '<div class="grid2">'+
+        '<button class="btn btn-outline" onclick="closeMatch()">Keep swiping</button>'+
+        '<button class="btn btn-primary" onclick="closeMatch();openChat(\''+pid+'\')">Send message</button>'+
+      '</div>'+
+    '</div>';
+  $('#match-modal').classList.add('active');
+}
+function closeMatch(){ $('#match-modal').classList.remove('active'); }
+
+/* ---------- Chat ---------- */
+function openChat(pid){
+  state.currentChat = pid;
+  const p = PET_BY_ID[pid];
+  $('#chat-head').innerHTML =
+    '<button class="iconbtn" onclick="selectTab(\'matches\')" aria-label="Back">'+svg('back',22)+'</button>'+
+    '<div class="avatar" style="height:38px;width:38px">'+petImg(p.photo,'card-img')+'</div>'+
+    '<div><div style="font-weight:600">'+p.name+'</div><div class="muted small">'+p.owner+'</div></div>';
+  $('#send-btn').innerHTML = svg('send',18);
+  renderMessages();
+  showScreen('chat');
+  setTimeout(()=>$('#chat-input').focus(),60);
+}
+function renderMessages(){
+  const msgs = state.messages[state.currentChat] || [];
+  const box = $('#chat-scroll');
+  if(!msgs.length){
+    box.innerHTML = '<p class="center muted small" style="padding:48px 0">Send a message to start chatting.</p>';
+  } else {
+    box.innerHTML = msgs.map(m=>
+      '<div class="msg-row '+(m.from==='me'?'me':'')+'"><div class="bubble '+(m.from==='me'?'me':'them')+'">'+escapeHtml(m.text)+'</div></div>'
+    ).join('');
+  }
+  box.scrollTop = box.scrollHeight;
+}
+function sendMsg(){
+  const inp = $('#chat-input');
+  const v = inp.value.trim();
+  if(!v) return;
+  const pid = state.currentChat;
+  state.messages[pid].push({from:'me',text:v});
+  setMatchPreview(pid,v);
+  inp.value = '';
+  renderMessages();
+  setTimeout(()=>{
+    const reply = pickAutoReply(v);
+    state.messages[pid].push({from:'them',text:reply});
+    setMatchPreview(pid,reply);
+    renderMessages();
+  }, 800);
+}
+function setMatchPreview(pid,text){
+  const m = state.matches.find(x=>x.petId===pid);
+  if(m) m.last = text;
+}
+function escapeHtml(s){ return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- Matches ---------- */
+function viewMatches(){
+  let html = '<div class="topbar"><span class="page-title">Matches</span></div>';
+  if(!state.matches.length){
+    html += '<div class="section-pad"><div class="empty"><div class="em">💌</div>'+
+      '<h2 style="margin-top:10px;font-size:18px">No matches yet</h2>'+
+      '<p class="muted small" style="margin-top:4px">Keep swiping in Discover!</p></div></div>';
+    return html;
+  }
+  html += '<div class="list">';
+  for(const m of state.matches){
+    const p = PET_BY_ID[m.petId];
+    html += '<button class="row-card" onclick="openChat(\''+m.petId+'\')">'+
+      '<div class="avatar">'+petImg(p.photo,'card-img')+'</div>'+
+      '<div class="row-main"><div class="row-top"><span class="row-name">'+p.name+'</span>'+
+      '<span class="muted small">('+p.owner+')</span></div>'+
+      '<div class="row-preview">'+(m.last?escapeHtml(m.last):'Say hi!')+'</div></div></button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ---------- Community ---------- */
+function matchedPetsIn(city){
+  return state.matches.map(m=>PET_BY_ID[m.petId]).filter(p=>p && p.city===city);
+}
+function viewCommunity(){
+  const city = state.communityCity;
+  let html = '<div class="topbar"><span class="page-title">Community</span>'+
+    '<select class="field" style="height:38px;width:auto;font-size:14px" onchange="state.communityCity=this.value;renderApp()">'+
+      CITIES.map(c=>'<option'+(c===city?' selected':'')+'>'+c+'</option>').join('')+
+    '</select></div>';
+  html += '<p class="muted small" style="padding:0 18px 6px">Events near pet parents in '+city+'.</p>';
+  const matched = matchedPetsIn(city);
+  html += '<div class="list">';
+  for(const ev of EVENTS[city]){
+    const going = state.rsvps.has(ev.id);
+    const count = ev.attending + (going?1:0);
+    html += '<button class="evt" onclick="openEvent(\''+ev.id+'\')">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+        '<div style="min-width:0"><h3>'+ev.name+'</h3>'+
+          '<div class="evt-meta">'+svg('calendar',13)+eventDate(ev.days)+' • '+ev.details+'</div>'+
+          '<div class="evt-meta">'+svg('pin',13)+ev.location+'</div></div>'+
+        (going?'<span class="badge">Going</span>':'')+
+      '</div>'+
+      '<div class="going-line"><span class="evt-meta">'+svg('users',13)+count+' attending</span>'+
+        (matched.length?'<span style="display:flex;align-items:center;gap:8px"><span class="stack">'+
+          matched.slice(0,4).map(p=>'<span class="avatar sm">'+petImg(p.photo,'card-img')+'</span>').join('')+
+          '</span><span class="small" style="color:var(--blue-700);font-weight:600">'+
+          (matched.length===1?matched[0].name+' is going':matched.length+' matches going')+'</span></span>':'')+
+      '</div></button>';
+  }
+  html += '</div>';
+  return html;
+}
+function openEvent(id){ state.currentEvent = id; state.tab = 'eventDetail'; renderApp(); showScreen('app'); }
+function viewEventDetail(){
+  const ev = EVENT_BY_ID[state.currentEvent];
+  const going = state.rsvps.has(ev.id);
+  const count = ev.attending + (going?1:0);
+  const matched = matchedPetsIn(ev.city);
+  let html = '<div class="chead"><button class="iconbtn" onclick="selectTab(\'community\')" aria-label="Back">'+svg('back',22)+'</button><b>Event</b></div>';
+  html += '<div class="section-pad">'+
+    '<h1 style="font-size:22px">'+ev.name+'</h1>'+
+    '<div class="evt-meta" style="margin-top:8px">'+svg('calendar',14)+eventDate(ev.days)+' • '+ev.details+'</div>'+
+    '<div class="evt-meta" style="margin-top:4px">'+svg('pin',14)+ev.location+'</div>'+
+    '<div class="evt-meta" style="margin-top:4px">'+svg('users',14)+count+' attending</div>'+
+    '<p style="margin-top:14px;line-height:1.5;color:var(--n600)">'+ev.desc+'</p>';
+  if(matched.length){
+    html += '<div class="going-line"><span class="small muted">Your matches going</span>'+
+      '<span class="stack">'+matched.slice(0,5).map(p=>'<span class="avatar sm">'+petImg(p.photo,'card-img')+'</span>').join('')+'</span></div>';
+  }
+  html += '<div class="spacer"></div><div class="spacer"></div>'+
+    '<button class="btn '+(going?'btn-outline':'btn-primary')+' full" onclick="toggleRsvp(\''+ev.id+'\')">'+
+      (going?'Cancel RSVP':"I'm going 🐾")+'</button>'+
+    '</div>';
+  return html;
+}
+function toggleRsvp(id){
+  if(state.rsvps.has(id)) state.rsvps.delete(id); else state.rsvps.add(id);
+  renderApp();
+}
+
+/* ---------- Profile ---------- */
+function viewProfile(){
+  const u = state.user, p = u.pet;
+  const cap = (s)=> s ? s[0]+s.slice(1).toLowerCase() : '';
+  const petLine = [p.breed, cap(p.size), cap(p.gender)].filter(Boolean).join(' • ');
+  return '<div class="topbar"><span class="page-title">Profile</span></div>'+
+    '<div class="section-pad center" style="padding-top:8px">'+
+      '<div class="avatar paw" style="height:96px;width:96px;margin:0 auto;font-size:44px;box-shadow:0 0 0 4px var(--yellow-500)">🐾</div>'+
+      '<h2 style="margin-top:12px;font-size:22px">'+escapeHtml(u.name)+'</h2>'+
+      '<p class="muted">'+u.city+'</p>'+
+      (u.bio?'<p class="small" style="margin-top:6px;color:var(--n600)">'+escapeHtml(u.bio)+'</p>':'')+
+    '</div>'+
+    '<div class="section-pad" style="padding-top:0">'+
+      '<p class="muted small" style="margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Your pet</p>'+
+      '<div class="pcard">'+
+        '<div style="font-weight:600">'+escapeHtml(p.name)+'<span class="muted" style="font-weight:400"> • '+escapeHtml(String(p.age))+' yrs</span>'+
+          (p.vaccinated?' <span class="chip-light" style="background:#e7f6ec;color:#1a7f43">💉 vaccinated</span>':'')+'</div>'+
+        '<p class="muted small" style="margin-top:3px">'+escapeHtml(petLine)+'</p>'+
+        (p.bio?'<p style="margin-top:8px;font-size:14px;color:var(--n600)">'+escapeHtml(p.bio)+'</p>':'')+
+        '<div class="chip-row" style="margin-top:10px">'+p.temperament.map(t=>'<span class="chip-light">'+escapeHtml(t)+'</span>').join('')+'</div>'+
+        (p.activities.length?'<div class="chip-row" style="margin-top:8px">'+p.activities.map(a=>'<span class="chip-light" style="background:#fff7e0;color:var(--yellow-600)">'+escapeHtml(a)+'</span>').join('')+'</div>':'')+
+      '</div>'+
+      '<div class="spacer"></div>'+
+      '<div class="info-row"><span>Matches</span><span>'+state.matches.length+'</span></div>'+
+      '<div class="spacer"></div><div class="spacer"></div>'+
+      '<button class="btn btn-outline full" onclick="resetAll()">Log out</button>'+
+    '</div>';
+}
+
+/* ---------- Init ---------- */
+$('#verify-back').innerHTML = svg('back',22);
+showScreen('login');
+</script>
+</body>
+</html>
