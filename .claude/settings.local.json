@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npx prisma *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(cd /tmp)",
+      "Bash(curl -sS -b cookies.txt http://localhost:3000/community)",
+      "Read(//tmp/**)",
+      "Bash(grep -c '-space-x-2' /tmp/community.html)",
+      "Bash(rm -f cookies.txt)",
+      "Bash(curl -sS -c cookies.txt -X POST -H 'Content-Type: application/json' -d '{\"phone\":\"+91900000000\",\"otp\":\"0000\"}' http://localhost:3000/api/auth/verify)",
+      "Bash(npm install *)",
+      "Bash(npx next *)",
+      "Bash(curl -sS -o /dev/null -w 'login: HTTP %{http_code}\\\\n' http://localhost:3000/login)",
+      "Bash(export DATABASE_URL=\"postgresql://postgres:AbbNqMvUqLMqBpuz@db.gxkdoolrgfobzbjdvihb.supabase.co:5432/postgres\")",
+      "Bash(export DIRECT_URL=\"postgresql://postgres:AbbNqMvUqLMqBpuz@db.gxkdoolrgfobzbjdvihb.supabase.co:5432/postgres\")",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('hex'\\)\\)\")"
+    ]
+  }
+}
