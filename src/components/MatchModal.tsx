@@ -17,7 +17,7 @@ export function MatchModal({ match, onClose }: { match: MatchData; onClose: () =
         className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-500">It&apos;s a match!</p>
+        <p className="text-sm font-semibold uppercase tracking-wider text-accent-600">It&apos;s a match!</p>
         <h2 className="mt-1 text-2xl font-bold">{match.myPet.name} & {match.otherPet.name}</h2>
         <div className="my-6 flex items-center justify-center gap-4">
           {[match.myPet, match.otherPet].map((p, i) => (

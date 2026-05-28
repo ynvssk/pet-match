@@ -5,13 +5,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Dog-vision palette: dogs are red-green colourblind and see blue + yellow best.
         brand: {
-          DEFAULT: '#FF6B5B',
-          50: '#FFF1EF',
-          100: '#FFE0DB',
-          500: '#FF6B5B',
-          600: '#E85746',
-          700: '#C7402F',
+          DEFAULT: '#2D6CDF',
+          50: '#EFF4FE',
+          100: '#D8E4FB',
+          500: '#2D6CDF',
+          600: '#1F58C0',
+          700: '#17448F',
+        },
+        accent: {
+          DEFAULT: '#F2B705',
+          400: '#FFC83D',
+          500: '#F2B705',
+          600: '#D99E00',
         },
       },
       fontFamily: {

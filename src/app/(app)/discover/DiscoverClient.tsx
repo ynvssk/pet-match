@@ -90,7 +90,7 @@ export function DiscoverClient({ initialPets }: { initialPets: Pet[] }) {
         <button
           onClick={() => act('LIKE')}
           disabled={busy}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm active:scale-95"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-500 text-white shadow-sm active:scale-95"
           aria-label="Like"
         >
           <Heart size={28} fill="currentColor" />
